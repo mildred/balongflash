@@ -123,7 +123,17 @@ printf("\n Утилита предназначена для прошивки м�
 -e       - разобрать файл прошивки на разделы без заголовков\n\
 -s       - разобрать файл прошивки на разделы с заголовками\n\
 -r       - выйти из режима прошивки и перезагрузить модем\n\
-\n",argv[0]);
+\n\
+\n The tool is designed for the modem firmware E3372S\n\n\
+%s [ключи] <file name to download a directory name or file>\n\n\
+ Valid options are:\n\n\
+-p <tty> - serial port for communicating with the loader (by default /dev/ttyUSB0)\n\
+-n       - mode multifaylovoy firmware from the specified directory\n\
+-m       - bring the card firmware file and exit\n\
+-e       - disassemble the firmware file into sections without headers\n\
+-s       - disassemble the firmware file into sections with headings\n\
+-r       - exit the firmware and reboot the modem\n\
+\n",argv[0],argv[0]);
     return;
 
    case 'p':
@@ -157,12 +167,12 @@ printf("\n Утилита предназначена для прошивки м�
 }  
 
 if (eflag&sflag) {
-  printf("\n Ключи -s и -e несовместимы\n");
+  printf("\n Ключи -s и -e несовместимы\n The -s and -e are incompatible\n");
   return;
 }  
 
 if (nflag&(eflag|sflag|mflag)) {
-  printf("\n Ключ -n несовместим с ключами -s, -m и -e\n");
+  printf("\n Ключ -n несовместим с ключами -s, -m и -e\n The -n option is incompatible with the keys -s, -m and -e\n");
   return;
 }  
   
@@ -176,9 +186,9 @@ if ((optind>=argc)&rflag) goto sio;
 //--------------------------------------------
 if (optind>=argc) {
   if (nflag)
-    printf("\n - Не указан каталог с файлами\n");
+    printf("\n - Не указан каталог с файлами\n - Not specified directory files\n");
   else 
-    printf("\n - Не указано имя файла для загрузки\n");
+    printf("\n - Не указано имя файла для загрузки\n - Not specified file name to download\n");
   return;
 }  
 
@@ -189,7 +199,7 @@ else {
   // для однофайловых операций
 in=fopen(argv[optind],"r");
 if (in == 0) {
-  printf("\n Ошибка открытия %s",argv[optind]);
+  printf("\n Ошибка открытия %s\n Failed to open %s",argv[optind],argv[optind]);
   return;
 }
 }
@@ -199,7 +209,7 @@ if (in == 0) {
 //--------------------------------------------
 
 if (!nflag) {
-  printf("\n Разбираем файл прошвки...");
+  printf("\n Разбираем файл прошвки...\n Parsing file...");
   while (fread(&i,1,4,in) == 4) {
     if (i != dpattern) continue; // ищем разделитель
     
@@ -217,7 +227,7 @@ if (!nflag) {
     npart++; 
   }
   if (npart == 0) {
-    printf("\nРазделы не найдены!");
+    printf("\nРазделы не найдены!\nSections found!");
     return ;
   }  
 }  
@@ -225,7 +235,7 @@ if (!nflag) {
 // Поиск файлов прошивок в указанном каталоге
 //--------------------------------------------
 else {
-  printf("\n Поиск файлов-образов разделов...\n\n ##   Размер      ID       Имя       Файл\n-----------------------------------------------------------------\n");
+  printf("\n Поиск файлов-образов разделов...\n Search for files, partition...\n\n ##   Размер      ID       Имя       Файл\n ##   Size        ID       File      Size\n-----------------------------------------------------------------\n");
   for (npart=0;npart<30;npart++) {
     if (find_file(npart, fdir, ptable[npart].filename, &ptable[npart].code, &ptable[npart].size) == 0) break; // конец поиска - раздела с таким ID не нашли
     // получаем символическое имя раздела
@@ -234,14 +244,14 @@ else {
   }
 }
 
-printf("\n Найдено %i разделов",npart);
+printf("\n Найдено %i разделов\n Found %i partition",npart);
 
   
 //------ Режим вывода карты файла прошивки
 //--------------------------------------------
   
 if (mflag) {
- printf("\n Таблица разделов, найденных в файле:\n\n ## Смещение  Размер   Имя\n-------------------------------------");
+ printf("\n Таблица разделов, найденных в файле:\n The partition table found in the file:\n\n ## Смещение  Размер   Имя\n ## Offset    Size     Name\n-------------------------------------");
  for (i=0;i<npart;i++) 
      printf("\n %02i %08x %8i  %s",i,ptable[i].offset,ptable[i].size,ptable[i].pname); 
  printf("\n");
@@ -252,7 +262,7 @@ if (mflag) {
 //------- Режим разрезания файла прошивки
 //--------------------------------------------
 if (eflag|sflag) {
- printf("\n Выделение разделов из файла прошивки:\n\n ## Смещение  Размер   Имя\n-------------------------------------");
+ printf("\n Выделение разделов из файла прошивки:\n Partitioning of the firmware file:\n\n ## Смещение  Размер   Имя\n ## Offset    Size     Name\n-------------------------------------");
  for (i=0;i<npart;i++) {  
    printf("\n %02i %08x %8i  %s",i,ptable[i].offset,ptable[i].size,ptable[i].pname); 
    // формируем имя файла
@@ -287,9 +297,9 @@ sio:
 
 if (!open_port(devname))  {
 #ifndef WIN32
-   printf("\n - Последовательный порт %s не открывается\n", devname); 
+   printf("\n - Последовательный порт %s не открывается\n - Serial %s is not open\n", devname); 
 #else
-   printf("\n - Последовательный порт COM%s не открывается\n", devname); 
+   printf("\n - Последовательный порт COM%s не открывается\n - COM%s is not open\n", devname); 
 #endif
    return; 
 }
@@ -304,31 +314,31 @@ send_cmd(cmddone,1,replybuf);
 
 
 // Входим в HDLC-режим
-printf("\n Входим в режим HDLC...");
+printf("\n Входим в режим HDLC...\n Enter the HDLC mode...");
 port_timeout(100);
 
 
 for (err=0;err<10;err++) {
 
 if (err == 10) {
-  printf("\n Превышено число попыток входа в режим\n");
+  printf("\n Превышено число попыток входа в режим\n You have exceeded the number of login attempts mode\n");
   return;
 }  
   
 write(siofd,datamodecmd,strlen(datamodecmd));
 res=read(siofd,replybuf,6);
 if (res != 6) {
-  printf("\n Неправильная длина ответа на ^DATAMODE, повторяем попытку...");
+  printf("\n Неправильная длина ответа на ^DATAMODE, повторяем попытку...\n Incorrect length of the answer to the ^ DATAMODE, repeat attempt...");
   continue;
 }  
 if (memcmp(replybuf,OKrsp,6) != 0) {
-  printf("\n Команда ^DATAMODE отвергнута, повторяем попытку...");
+  printf("\n Команда ^DATAMODE отвергнута, повторяем попытку...\n Team ^DATAMODE rejected repeat attempt...");
   continue;
 }  
 
 iolen=send_cmd(cmdver,1,replybuf);
 if ((iolen == 0)||(replybuf[1] != 0x0d)) {
-  printf("\n Ошибка получения версии протокола, повторяем попытку...");
+  printf("\n Ошибка получения версии протокола, повторяем попытку...\n Failed to get the protocol version, repeat attempt...");
   continue;
 }  
 break;
@@ -337,7 +347,7 @@ break;
 i=replybuf[2];
 replybuf[3+i]=0;
 printf("ok");
-printf("\n Версия протокола: %s",replybuf+3);
+printf("\n Версия протокола: %s\n Protocol version: %s",replybuf+3);
 printf("\n");
 
 if ((optind>=argc)&rflag) goto reset; // перезагрузка без указания файла
@@ -345,7 +355,7 @@ if ((optind>=argc)&rflag) goto reset; // перезагрузка без ука�
 
 // Главный цикл записи разделов
 for(part=0;part<npart;part++) {
-  printf("\r Записываем раздел %i - %s\n",part,ptable[part].pname);
+  printf("\r Записываем раздел / write section %i - %s\n",part,ptable[part].pname);
   
   // заполняем командный пакет
   *((unsigned int*)&cmd_dload_init[1])=htonl(ptable[part].code);  
@@ -353,7 +363,7 @@ for(part=0;part<npart;part++) {
   // отсылаем команду
   iolen=send_cmd(cmd_dload_init,12,replybuf);
   if ((iolen == 0) || (replybuf[1] != 2)) {
-    printf("\n Заголовок раздела не принят, код ошибки = %02x %02x %02x\n",replybuf[1],replybuf[2],replybuf[3]);
+    printf("\n Заголовок раздела не принят, код ошибки = %02x %02x %02x\n Header section is not accepted, an error code = ...\n",replybuf[1],replybuf[2],replybuf[3]);
 //    dump(cmd_dload_init,13,0);
     return;
   }  
@@ -369,7 +379,7 @@ for(part=0;part<npart;part++) {
 
   // Поблочный цикл
   for(blk=0;blk<((ptable[part].size+4095)/4096);blk++) {
-    printf("\r Блок %i из %i",blk,(ptable[part].size+4095)/4096); fflush(stdout);
+    printf("\r Блок (block) %i из %i",blk,(ptable[part].size+4095)/4096); fflush(stdout);
     res=ptable[part].size+ptable[part].offset-ftell(in);  // размер оставшегося куска до конца файла
     if (res<4096) blksize=res;  // корректируем размер последнего блока
     *(unsigned int*)&cmd_data_packet[1]=htonl(blk+1);  // # пакета
@@ -377,7 +387,7 @@ for(part=0;part<npart;part++) {
     fread(cmd_data_packet+7,1,blksize,in); // читаем очередной кусок раздела в буфер команды
     iolen=send_cmd(cmd_data_packet,blksize+7,replybuf); // отсылаем команду
     if ((iolen == 0) || (replybuf[1] != 2)) {
-      printf("\n Блок %i раздела не принят, код ошибки = %02x %02x %02x\n",blk,replybuf[1],replybuf[2],replybuf[3]);
+      printf("\n Блок %i раздела не принят, код ошибки = %02x %02x %02x\n Block% i section is not accepted, an error code = ...\n",blk,replybuf[1],replybuf[2],replybuf[3]);
 //      dump(cmd_data_packet,blksize+7,0);
       return;
     }  
@@ -391,7 +401,7 @@ for(part=0;part<npart;part++) {
    *((unsigned int*)&cmd_dload_end[8])=htonl(ptable[part].code);
    iolen=send_cmd(cmd_dload_end,24,replybuf); // отсылаем команду
   if ((iolen == 0) || (replybuf[1] != 2)) {
-    printf("\n Ошибка закрытия раздела, код ошибки = %02x %02x %02x\n",replybuf[1],replybuf[2],replybuf[3]);
+    printf("\n Ошибка закрытия раздела, код ошибки = %02x %02x %02x\n Error closing section, the error code = ...\n",replybuf[1],replybuf[2],replybuf[3]);
 //     dump(replybuf,iolen,0);
     return;
   }  
@@ -406,7 +416,7 @@ port_timeout(1);
 reset:
 
 if (rflag) {
-  printf("\n Перезарузка модема...\n");
+  printf("\n Перезарузка модема...\n Restart your modem...\n");
   send_cmd(cmd_reset,1,replybuf);
   write(siofd,resetcmd,strlen(resetcmd));
 }  

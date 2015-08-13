@@ -20,6 +20,7 @@ unsigned int spp=0;
 unsigned int pagesize=0;
 unsigned int sectorsize=512;
 unsigned int maxblock=0;     // Общее число блоков флешки
+                             // The total number of blocks of the stick
 char flash_mfr[30]={0};
 char flash_descr[30]={0};
 unsigned int oobsize=0;
